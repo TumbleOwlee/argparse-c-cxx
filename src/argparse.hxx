@@ -263,7 +263,78 @@ class command : public argument {
 public:
   command(std::string_view _name, std::string_view _desc);
 
-  template <typename Opt> auto add_optional_arg(char const _short, std::string_view _long, std::string_view _desc) {
+  auto add_opt_flag(char const flag, std::string_view const long_flag, std::string_view description)
+      -> optional_flag const & {
+    return add_optional_arg<optional_flag>(flag, long_flag, description);
+  }
+
+  template <typename T>
+  auto add_opt_value(char const flag, std::string_view const long_flag, std::string_view description)
+      -> optional_value<T> const & {
+    return add_optional_arg<optional_value<T>>(flag, long_flag, description);
+  }
+
+  template <typename T>
+  auto add_opt_list(char const flag, std::string_view const long_flag, std::string_view description)
+      -> optional_list<T> const & {
+    return add_optional_arg<optional_list<T>>(flag, long_flag, description);
+  }
+
+  template <typename T>
+  auto add_req_value(std::string_view const name, std::string_view const description) -> optional_value<T> const & {
+    return add_required_arg<required_value<T>>(name, description);
+  }
+
+  template <typename T>
+  auto add_req_list(std::string_view const name, std::string_view const description) -> optional_list<T> const & {
+    return add_required_arg<required_list<T>>(name, description);
+  }
+
+  template <typename T>
+  auto add_req_list(char const flag, std::string_view const long_flag, std::string_view description)
+      -> optional_list<T> const & {
+    return add_optional_arg<optional_list<T>>(flag, long_flag, description);
+  }
+
+  auto get_opt_flag(std::string_view const long_flag) -> optional_flag const & {
+    return get_optional<optional_flag>(long_flag);
+  }
+
+  template <typename T> auto get_opt_value(std::string_view const long_flag) -> optional_value<T> const & {
+    return get_optional<optional_value<T>>(long_flag);
+  }
+
+  template <typename t> auto get_opt_list(std::string_view const long_flag) -> optional_list<t> const & {
+    return get_optional<optional_list<t>>(long_flag);
+  }
+
+  template <typename T> auto get_req_value(std::string_view const name) -> required_value<T> const & {
+    return get_required<required_value<T>>(name);
+  }
+
+  template <typename t> auto get_req_list(std::string_view const name) -> required_list<t> const & {
+    return get_required<required_list<t>>(name);
+  }
+
+  auto takes() -> size_t override;
+
+  auto add_command(std::string_view name, std::string_view desc) -> command &;
+
+protected:
+  std::string _base;
+  std::vector<std::unique_ptr<optional>> _optional;
+  std::vector<std::unique_ptr<argument>> _required;
+  std::vector<std::unique_ptr<command>> _commands;
+
+  auto show_help() const -> void;
+
+  void set_base(std::string_view base);
+
+  auto parse(char const *const *argv, int argc) -> int override;
+
+private:
+  template <typename Opt>
+  auto add_optional_arg(char const _short, std::string_view _long, std::string_view _desc) -> Opt const & {
     auto opt = std::make_unique<Opt>(_short, _long, _desc);
     if (std::ranges::any_of(_optional.begin(), _optional.end(), [_short, _long](auto &ptr) -> bool {
           auto [s, l] = ptr->abbr();
@@ -273,6 +344,7 @@ public:
       throw std::runtime_error(msg);
     }
     _optional.push_back(std::move(opt));
+    return *reinterpret_cast<Opt *>(_optional.back().get());
   }
 
   template <typename Arg> auto add_required_arg(std::string_view _name, std::string_view _desc) {
@@ -293,7 +365,7 @@ public:
     if (v.empty()) {
       abort();
     }
-    return *reinterpret_cast<T const *>(v.begin()->get());
+    return *dynamic_cast<T const *>(v.begin()->get());
   }
 
   template <typename T> auto get_required(std::string_view _name) -> T const & {
@@ -302,24 +374,8 @@ public:
     if (v.empty()) {
       abort();
     }
-    return *reinterpret_cast<T const *>(v.begin()->get());
+    return *dynamic_cast<T const *>(v.begin()->get());
   }
-
-  auto takes() -> size_t override;
-
-  auto add_command(std::string_view name, std::string_view desc) -> command &;
-
-protected:
-  std::string _base;
-  std::vector<std::unique_ptr<optional>> _optional;
-  std::vector<std::unique_ptr<argument>> _required;
-  std::vector<std::unique_ptr<command>> _commands;
-
-  auto show_help() const -> void;
-
-  void set_base(std::string_view base);
-
-  auto parse(char const *const *argv, int argc) -> int override;
 };
 
 /*********************************************************************************************************************

@@ -115,24 +115,36 @@ auto argparse::command::parse(char const *const *argv, int argc) -> int {
       show_help();
       return -1;
     } else if (sv.starts_with('-') && sv != "--") {
-      auto arg = sv.starts_with("--") ? sv.substr(2) : sv.substr(1);
+      auto handle = [&](std::string_view const arg) -> bool {
+        auto v = std::ranges::filter_view(std::span(_optional.begin(), _optional.end()), [arg](auto &ptr) -> bool {
+          auto [s, l] = ptr->abbr();
+          return arg.length() == 1 ? (s == arg[0]) : (l == arg);
+        });
 
-      auto v = std::ranges::filter_view(std::span(_optional.begin(), _optional.end()), [arg](auto &ptr) -> bool {
-        auto [s, l] = ptr->abbr();
-        return (arg.length() == 1 && s == arg[0]) || l == arg;
-      });
+        if (v.empty()) {
+          return false;
+        }
 
-      if (v.empty()) {
-        return -1;
+        auto used = (*v.begin())->parse(&argv[pos + 1], end - pos - 1);
+        if (used == -1) {
+          show_help();
+          return false;
+        }
+        pos += used + 1;
+        return true;
+      };
+
+      if (sv.starts_with("--")) {
+        if (!handle(sv.substr(2))) {
+          return -1;
+        }
+      } else {
+        for (auto i = 1; i < sv.length(); ++i) {
+          if (!handle(sv.substr(i, 1))) {
+            return -1;
+          }
+        }
       }
-
-      auto used = (*v.begin())->parse(&argv[pos + 1], end - pos - 1);
-      if (used == -1) {
-        show_help();
-        return -1;
-      }
-      pos += used + 1;
-
     } else if (pos != argc) {
       for (auto &c : _commands) {
         if (c->name() == sv) {
@@ -145,7 +157,6 @@ auto argparse::command::parse(char const *const *argv, int argc) -> int {
         }
       }
     } else {
-
       for (auto &r : _required) {
         if (pos >= argc) {
           return -1;
