@@ -68,10 +68,7 @@ protected:
  *
  * An instance of this class specifies a flag parameter. A flag can either
  * be set (true) or unset (false). Additionally a flag can be specified
- * multiple times `-v -v -v`.
- *
- * FIXME: Support multiple occurrances of the same flag using the common
- *        scheme like `-vvv` instead of `-v -v -v`
+ * multiple times `-v -v -v` or via `-vvv`.
  *
  *********************************************************************************************************************/
 
