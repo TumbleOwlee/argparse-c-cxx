@@ -25,7 +25,6 @@ int main(int argc, char const *const *argv) {
   cmd_add_req_list(show, vars, "VARS", "Some variables.");
 
   if (0 != parser_parse_args(parser, argv, argc)) {
-    fprintf(stderr, "Failed to parse arguments!\n");
     return 1;
   }
 
