@@ -33,12 +33,11 @@
  * optional
  *********************************************************************************************************************/
 
-struct optional {
+struct __attribute__((packed)) optional {
     char _short;
+    unsigned int _count : 8;
     char const *_long;
     char const *_desc;
-
-    int _count;
     char const *const *_values;
 
     int (*takes)();
@@ -159,11 +158,11 @@ char const *const *optional_list_get(struct optional *list) {
  * required
  *********************************************************************************************************************/
 
-struct required {
+struct __attribute__((packed)) required {
     char const *_name;
     char const *_desc;
 
-    int _count;
+    unsigned int _count : 8;
     char const *const *_values;
 
     int (*takes)();
@@ -244,10 +243,10 @@ struct optional_item;
 struct required_item;
 struct command_item;
 
-struct command {
+struct __attribute__((packed)) command {
     char const *_name;
     char const *_desc;
-    int _set;
+    unsigned int _set : 1;
 
     struct command *_parent;
     struct optional_item *_optionals;
@@ -271,7 +270,7 @@ int command_is_set(struct command *ctx) { return ctx->_set; }
  * optional_item
  *********************************************************************************************************************/
 
-struct optional_item {
+struct __attribute__((packed)) optional_item {
     struct optional _optional;
     struct optional_item *_next;
 };
@@ -315,7 +314,7 @@ static struct optional *command_add_optional_item(struct command *ctx, char cons
  * required_item
  *********************************************************************************************************************/
 
-struct required_item {
+struct __attribute__((packed)) required_item {
     struct required _required;
     struct required_item *_next;
 };
@@ -358,7 +357,7 @@ static struct required *command_add_req_item(struct command *ctx, char const *co
  * command_item
  *********************************************************************************************************************/
 
-struct command_item {
+struct __attribute__((packed)) command_item {
     struct command _command;
     struct command_item *_next;
 };
