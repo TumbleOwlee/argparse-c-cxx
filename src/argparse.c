@@ -430,7 +430,19 @@ struct required *command_add_req_list(struct command *ctx, char const *const nam
  *********************************************************************************************************************/
 
 static void command_show_help(struct command *ctx) {
-  fprintf(stdout, "\n    Usage: %s ", ctx->_name);
+  fprintf(stdout, "\n    Usage: ");
+
+  struct command *processed = NULL;
+  while (processed != ctx->_parent) {
+    struct command *c = ctx->_parent;
+    while (c->_parent != processed) {
+      c = c->_parent;
+    }
+    fprintf(stdout, "%s ", c->_name);
+    processed = c;
+  }
+
+  fprintf(stdout, "%s ", ctx->_name);
 
   if (ctx->_optionals != NULL) {
     fprintf(stdout, "[OPTIONS] ");
