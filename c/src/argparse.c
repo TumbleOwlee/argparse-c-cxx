@@ -91,6 +91,7 @@ static int optional_value_takes() { return 1; }
 
 static int optional_value_parse(struct optional *ctx, char const *const *argv, int argc) {
   if (argc < 1 || ctx->_values != NULL || ctx->_count != 0) {
+    // Fail if option already parsed
     return -1;
   }
   ctx->_values = &argv[0];
@@ -122,6 +123,7 @@ static int optional_list_takes() { return 1; }
 
 static int optional_list_parse(struct optional *ctx, char const *const *argv, int argc) {
   if (argc < 1 || ctx->_values != NULL || ctx->_count != 0) {
+    // Fail if option already parsed
     return -1;
   }
   ctx->_values = &argv[0];
@@ -186,6 +188,7 @@ static int required_value_takes() { return 1; }
 
 static int required_value_parse(struct required *ctx, char const *const *argv, int argc) {
   if (argc < 1 || ctx->_values != NULL || ctx->_count != 0) {
+    // Fail if required already parsed
     return -1;
   }
   ctx->_values = &argv[0];
@@ -209,6 +212,7 @@ static int required_list_takes() { return 2; }
 
 static int required_list_parse(struct required *ctx, char const *const *argv, int argc) {
   if (argc < 1 || ctx->_values != NULL || ctx->_count != 0) {
+    // Fail if required already parsed
     return -1;
   }
   ctx->_values = &argv[0];
@@ -260,6 +264,8 @@ static void command_init(struct command *ctx, char const *const name, char const
   ctx->_requires = NULL;
   ctx->_commands = NULL;
 }
+
+int command_is_set(struct command *ctx) { return ctx->_set; }
 
 /*********************************************************************************************************************
  * optional_item
@@ -454,6 +460,7 @@ struct required *command_add_req_list(struct command *ctx, char const *const nam
 static void command_show_help(struct command *ctx) {
   fprintf(stdout, "\n    Usage: ");
 
+  // Print parent arguments to provide full commandline
   struct command *processed = NULL;
   while (processed != ctx->_parent) {
     struct command *c = ctx->_parent;
@@ -483,6 +490,7 @@ static void command_show_help(struct command *ctx) {
   }
   fprintf(stdout, "\n\n");
 
+  // Format description, supports manual linebreaks but also adds linebreaks to keep format
   if (ctx->_desc != NULL) {
     char const *start = ctx->_desc;
     char const *end = ctx->_desc;
@@ -508,6 +516,7 @@ static void command_show_help(struct command *ctx) {
     fprintf(stdout, "\n");
   }
 
+  // Display all supported options
   if (ctx->_optionals != NULL) {
     int width = 4;
     struct optional_item *opt = ctx->_optionals;
@@ -529,6 +538,7 @@ static void command_show_help(struct command *ctx) {
     fprintf(stdout, "\n");
   }
 
+  // Display all supported commands
   if (ctx->_commands != NULL) {
     int width = 4;
     struct command_item *cmd = ctx->_commands;
@@ -549,6 +559,7 @@ static void command_show_help(struct command *ctx) {
     fprintf(stdout, "\n");
   }
 
+  // Display all required arguments
   if (ctx->_requires != NULL) {
     int width = 4;
     struct required_item *req = ctx->_requires;
@@ -570,6 +581,13 @@ static void command_show_help(struct command *ctx) {
   }
 }
 
+/*********************************************************************************************************************
+ * Parsing utility
+ *********************************************************************************************************************/
+
+/*!
+ * Find the next argument position that is option or command
+ */
 static int idx_of_next_opt(struct command *ctx, char const *const *argv, int argc, int start) {
   for (int i = start; i < argc; ++i) {
     if (*argv[i] == '-') {
@@ -589,10 +607,15 @@ static int idx_of_next_opt(struct command *ctx, char const *const *argv, int arg
   return argc;
 }
 
+/*!
+ * Parses option, supports flag duplicates using `-v -v -v` or `-vvv`
+ */
 static int optional_parse(struct command *ctx, char const *const *argv, int argc, char const *const arg) {
   int used = -1;
   int is_short = arg[1] == '-' ? 0 : 1;
+
   if (is_short == 1) {
+    // Parse e.g. `-v` and `-vvvv`
     int len = strlen(arg);
     for (int i = 1; i < len; ++i) {
       struct optional_item *opt = ctx->_optionals;
@@ -610,6 +633,7 @@ static int optional_parse(struct command *ctx, char const *const *argv, int argc
       used = (used == -1 ? 0 : used) + opt->_optional.parse(&opt->_optional, argv, argc);
     }
   } else {
+    // Parse e.g. `--verbose`
     int len = strlen(&arg[2]);
     struct optional_item *opt = ctx->_optionals;
     while (opt != NULL) {
@@ -626,6 +650,8 @@ static int optional_parse(struct command *ctx, char const *const *argv, int argc
 
     used = opt->_optional.parse(&opt->_optional, argv, argc);
   }
+
+  // Show help if parsing failed
   if (used == -1) {
     command_show_help(ctx);
     return -1;
@@ -634,12 +660,16 @@ static int optional_parse(struct command *ctx, char const *const *argv, int argc
   return used + 1;
 }
 
-int command_is_set(struct command *ctx) { return ctx->_set; }
+/*********************************************************************************************************************
+ * Parsing argument for command
+ *********************************************************************************************************************/
 
 static int command_parse_args(struct command *ctx, char const *const *argv, int argc) {
+  // Forbid multiple processing of same command
   if (ctx->_set != 0) {
     return -1;
   }
+
   ctx->_set = 1;
   int pos = 1;
   while (pos < argc) {
@@ -647,15 +677,18 @@ static int command_parse_args(struct command *ctx, char const *const *argv, int 
     int end = idx_of_next_opt(ctx, argv, argc, pos + 1);
 
     if ((len == 6 && strcmp(argv[pos], "--help") == 0) || (len == 2 && strcmp(argv[pos], "-h") == 0)) {
+      // Show help if requested
       command_show_help(ctx);
       return -1;
     } else if (len > 1 && *argv[pos] == '-' && (len != 2 || argv[pos][1] != '-')) {
+      // Support `--` to force continuation with required arguments
       int used = optional_parse(ctx, &argv[pos + 1], end - pos - 1, argv[pos]);
       if (used < 0) {
         return -1;
       }
       pos += used;
     } else if (pos < argc) {
+      // Check if argument is command and if so, parse command
       struct command_item *c = NULL;
       if (argv[pos][0] != '-') {
         c = ctx->_commands;
@@ -672,8 +705,10 @@ static int command_parse_args(struct command *ctx, char const *const *argv, int 
           c = c->_next;
         }
       } else if (len == 2 && argv[pos][1] == '-') {
+        // Skip '--'
         pos += 1;
       }
+      // Check for required arguments if arguments remaining and no subcommand was parsed
       if (pos < argc && c == NULL) {
         struct required_item *r = ctx->_requires;
         while (r != NULL) {
@@ -696,6 +731,10 @@ static int command_parse_args(struct command *ctx, char const *const *argv, int 
 
   return ctx->_requires == NULL ? argc : -1;
 }
+
+/*********************************************************************************************************************
+ * Parser
+ *********************************************************************************************************************/
 
 struct parser {
   struct command _internal;
