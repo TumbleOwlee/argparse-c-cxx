@@ -11,7 +11,7 @@ project(argparse-c
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-message("Build type: ${CMAKE_BUILD_TYPE}")
+message("-- ${PROJECT_NAME} Build type: ${CMAKE_BUILD_TYPE}")
 
 set (SOURCES
     "argparse.c"
