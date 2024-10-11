@@ -454,20 +454,20 @@ struct command_item {
     char const *end = ctx->_desc;
 
     while (*start != '\0') {
-      char const *pos = end + 1;
-      while (*pos != '\0' && *pos != ' ') {
+      char const *pos = end;
+      while (*pos != '\0' && *pos != ' ' && *pos != '\n') {
         ++pos;
       }
       if (*pos == '\0') {
         fprintf(stdout, "    %s\n", start);
         break;
       } else {
-        if ((pos - start) > 80) {
-          fprintf(stdout, "    %.*s\n", (int)(end - start), start);
-          start = end + 1;
-          end = end + 1;
+        if (*pos == '\n' || (pos - start) > 80) {
+          fprintf(stdout, "    %.*s\n", (int)(pos - start), start);
+          start = pos + 1;
+          end = pos + 1;
         } else {
-          end = pos;
+          end = pos + 1;
         }
       }
     }

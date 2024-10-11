@@ -1,3 +1,6 @@
+#ifndef __ARGPARSE_C__
+#define __ARGPARSE_C__
+
 struct optional;
 
 int optional_flag_get_count(struct optional *flag);
@@ -60,3 +63,13 @@ struct required *parser_add_required_list(struct parser *ctx, char const *const 
 int parser_parse_args(struct parser *ctx, char const *const *argv, int argc);
 
 /*PRIVATE*/ void parser_print_help(struct parser *ctx);
+
+#define parser_new(var, name, desc) struct parser *var = parser_init(name, desc)
+
+#define opt_flag_new(parser, var, flag, l_flag, desc) struct optional *var = parser_add_opt_flag(parser, flag, l_flag, desc)
+
+#define command_new(parser, var, name, desc) struct command *var = parser_add_command(parser, name, desc);
+
+#define req_value_new(parser, var, name, desc) struct required *var = parser_add_required_list(parser, name, desc);
+
+#endif // __ARGPARSE_C__
