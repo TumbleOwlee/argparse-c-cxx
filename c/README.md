@@ -1,6 +1,6 @@
 # CLI Argument Parser using plain C
 
-This project provides a simple CLI argument parser for plain C.
+This project provides a simple CLI argument parser for plain C. Parsing is performed with zero-copy in mind. Thus a minimal memory footprint is achieved.
 
 ## Quickstart
 
