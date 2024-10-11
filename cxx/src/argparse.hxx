@@ -65,26 +65,26 @@ template <> auto parse(char const *const s) -> std::string;
  *********************************************************************************************************************/
 
 class optional {
-public:
-  optional(char _short, std::string_view _long, std::string_view _desc);
-  virtual ~optional();
+  public:
+    optional(char _short, std::string_view _long, std::string_view _desc);
+    virtual ~optional();
 
-  optional(optional &&) = delete;
-  optional(optional const &) = delete;
+    optional(optional &&) = delete;
+    optional(optional const &) = delete;
 
-  auto operator=(optional &&) -> optional & = delete;
-  auto operator=(optional const &) -> optional & = delete;
+    auto operator=(optional &&) -> optional & = delete;
+    auto operator=(optional const &) -> optional & = delete;
 
-  auto desc() -> std::string_view const &;
-  auto abbr() -> std::tuple<char, std::string_view>;
+    auto desc() -> std::string_view const &;
+    auto abbr() -> std::tuple<char, std::string_view>;
 
-  virtual auto takes() -> size_t = 0;
-  virtual auto parse(char const *const *argv, int argc) -> int;
+    virtual auto takes() -> size_t = 0;
+    virtual auto parse(char const *const *argv, int argc) -> int;
 
-protected:
-  char _short;
-  std::string_view _long;
-  std::string_view _desc;
+  protected:
+    char _short;
+    std::string_view _long;
+    std::string_view _desc;
 };
 
 /*********************************************************************************************************************
@@ -98,18 +98,18 @@ protected:
  *********************************************************************************************************************/
 
 class optional_flag : public optional {
-public:
-  optional_flag(char _short, std::string_view _long, std::string_view _desc);
+  public:
+    optional_flag(char _short, std::string_view _long, std::string_view _desc);
 
-  auto cnt() const -> size_t;
-  auto is_set() const -> bool;
+    auto cnt() const -> size_t;
+    auto is_set() const -> bool;
 
-  auto takes() -> size_t override;
-  auto parse(char const *const *argv, int len) -> int override;
+    auto takes() -> size_t override;
+    auto parse(char const *const *argv, int len) -> int override;
 
-private:
-  size_t _cnt;
-  bool _flag;
+  private:
+    size_t _cnt;
+    bool _flag;
 };
 
 /*********************************************************************************************************************
@@ -122,22 +122,22 @@ private:
  *********************************************************************************************************************/
 
 template <typename T> class optional_value : public optional {
-public:
-  optional_value(char _short, std::string_view _long, std::string_view _desc) : optional(_short, _long, _desc) {}
+  public:
+    optional_value(char _short, std::string_view _long, std::string_view _desc) : optional(_short, _long, _desc) {}
 
-  auto get_value() const -> T const * { return std::get_if<T>(&_value); }
+    auto get_value() const -> T const * { return std::get_if<T>(&_value); }
 
-  auto takes() -> size_t override { return 1; }
-  auto parse(char const *const *argv, int len) -> int override {
-    if (len < 1) {
-      return -1;
+    auto takes() -> size_t override { return 1; }
+    auto parse(char const *const *argv, int len) -> int override {
+        if (len < 1) {
+            return -1;
+        }
+        _value = argparse::parse<T>(argv[0]);
+        return 1;
     }
-    _value = argparse::parse<T>(argv[0]);
-    return 1;
-  }
 
-private:
-  std::variant<std::monostate, T> _value;
+  private:
+    std::variant<std::monostate, T> _value;
 };
 
 /*********************************************************************************************************************
@@ -150,28 +150,28 @@ private:
  *********************************************************************************************************************/
 
 template <typename T> class optional_list : public optional {
-public:
-  optional_list(char _short, std::string_view _long, std::string_view _desc)
-      : optional(_short, _long, _desc), _values() {}
+  public:
+    optional_list(char _short, std::string_view _long, std::string_view _desc)
+        : optional(_short, _long, _desc), _values() {}
 
-  auto get_values() const -> std::vector<T> const & { return _values; }
+    auto get_values() const -> std::vector<T> const & { return _values; }
 
-  auto takes() -> size_t override { return std::numeric_limits<size_t>::max(); }
-  auto parse(char const *const *argv, int len) -> int override {
-    if (len < 1) {
-      return -1;
+    auto takes() -> size_t override { return std::numeric_limits<size_t>::max(); }
+    auto parse(char const *const *argv, int len) -> int override {
+        if (len < 1) {
+            return -1;
+        }
+        auto cnt = 0;
+        for (const auto &v : std::span(argv, len)) {
+            _values.push_back(argparse::parse<T>(v));
+            cnt += 1;
+        }
+
+        return cnt;
     }
-    auto cnt = 0;
-    for (const auto &v : std::span(argv, len)) {
-      _values.push_back(argparse::parse<T>(v));
-      cnt += 1;
-    }
 
-    return cnt;
-  }
-
-private:
-  std::vector<T> _values;
+  private:
+    std::vector<T> _values;
 };
 
 /*********************************************************************************************************************
@@ -184,25 +184,25 @@ private:
  *********************************************************************************************************************/
 
 class argument {
-public:
-  argument(std::string_view _name, std::string_view _desc);
-  virtual ~argument();
+  public:
+    argument(std::string_view _name, std::string_view _desc);
+    virtual ~argument();
 
-  argument(argument &&) = delete;
-  argument(argument const &) = delete;
+    argument(argument &&) = delete;
+    argument(argument const &) = delete;
 
-  auto operator=(argument &&) -> argument & = delete;
-  auto operator=(argument const &) -> argument & = delete;
+    auto operator=(argument &&) -> argument & = delete;
+    auto operator=(argument const &) -> argument & = delete;
 
-  auto name() -> std::string_view;
-  auto desc() -> std::string_view const &;
+    auto name() -> std::string_view;
+    auto desc() -> std::string_view const &;
 
-  virtual auto takes() -> size_t = 0;
-  virtual auto parse(char const *const *argv, int len) -> int;
+    virtual auto takes() -> size_t = 0;
+    virtual auto parse(char const *const *argv, int len) -> int;
 
-protected:
-  std::string_view _name;
-  std::string_view _desc;
+  protected:
+    std::string_view _name;
+    std::string_view _desc;
 };
 
 /*********************************************************************************************************************
@@ -215,23 +215,23 @@ protected:
  *********************************************************************************************************************/
 
 template <typename T> class required_value : public argument {
-public:
-  required_value(std::string_view _name, std::string_view _desc) : argument(_name, _desc) {}
+  public:
+    required_value(std::string_view _name, std::string_view _desc) : argument(_name, _desc) {}
 
-  auto get_value() const -> T const * { return std::get_if<T>(&_value); }
+    auto get_value() const -> T const * { return std::get_if<T>(&_value); }
 
-  auto takes() -> size_t override { return 1; }
-  auto parse(char const *const *argv, int len) -> int override {
-    if (len < 1) {
-      return -1;
+    auto takes() -> size_t override { return 1; }
+    auto parse(char const *const *argv, int len) -> int override {
+        if (len < 1) {
+            return -1;
+        }
+        _value = argparse::parse<T>(argv[0]);
+        return 1;
     }
-    _value = argparse::parse<T>(argv[0]);
-    return 1;
-  }
 
-private:
-  std::string_view _name;
-  std::variant<std::monostate, T> _value;
+  private:
+    std::string_view _name;
+    std::variant<std::monostate, T> _value;
 };
 
 /*********************************************************************************************************************
@@ -244,28 +244,28 @@ private:
  *********************************************************************************************************************/
 
 template <typename T> class required_list : public argument {
-public:
-  required_list(std::string_view _name, std::string_view _desc) : argument(_name, _desc), _values() {}
+  public:
+    required_list(std::string_view _name, std::string_view _desc) : argument(_name, _desc), _values() {}
 
-  auto get_values() const -> std::vector<T> const & { return _values; }
+    auto get_values() const -> std::vector<T> const & { return _values; }
 
-  auto takes() -> size_t override { return std::numeric_limits<size_t>::max(); }
-  auto parse(char const *const *argv, int len) -> int override {
-    if (len < 1) {
-      return -1;
+    auto takes() -> size_t override { return std::numeric_limits<size_t>::max(); }
+    auto parse(char const *const *argv, int len) -> int override {
+        if (len < 1) {
+            return -1;
+        }
+
+        auto cnt = 0;
+        for (const auto &v : std::span(argv, len)) {
+
+            _values.push_back(argparse::parse<T>(v));
+            cnt += 1;
+        }
+        return cnt;
     }
 
-    auto cnt = 0;
-    for (const auto &v : std::span(argv, len)) {
-
-      _values.push_back(argparse::parse<T>(v));
-      cnt += 1;
-    }
-    return cnt;
-  }
-
-private:
-  std::vector<T> _values;
+  private:
+    std::vector<T> _values;
 };
 
 /*********************************************************************************************************************
@@ -280,124 +280,124 @@ private:
 
 class command : public argument {
 
-  friend class argparse;
+    friend class argparse;
 
-public:
-  command(std::string_view _name, std::string_view _desc);
+  public:
+    command(std::string_view _name, std::string_view _desc);
 
-  auto add_opt_flag(char const flag, std::string_view const long_flag,
-                    std::string_view description) -> optional_flag const & {
-    return add_optional_arg<optional_flag>(flag, long_flag, description);
-  }
-
-  template <typename T>
-  auto add_opt_value(char const flag, std::string_view const long_flag,
-                     std::string_view description) -> optional_value<T> const & {
-    return add_optional_arg<optional_value<T>>(flag, long_flag, description);
-  }
-
-  template <typename T>
-  auto add_opt_list(char const flag, std::string_view const long_flag,
-                    std::string_view description) -> optional_list<T> const & {
-    return add_optional_arg<optional_list<T>>(flag, long_flag, description);
-  }
-
-  template <typename T>
-  auto add_req_value(std::string_view const name, std::string_view const description) -> optional_value<T> const & {
-    return add_required_arg<required_value<T>>(name, description);
-  }
-
-  template <typename T>
-  auto add_req_list(std::string_view const name, std::string_view const description) -> optional_list<T> const & {
-    return add_required_arg<required_list<T>>(name, description);
-  }
-
-  template <typename T>
-  auto add_req_list(char const flag, std::string_view const long_flag,
-                    std::string_view description) -> optional_list<T> const & {
-    return add_optional_arg<optional_list<T>>(flag, long_flag, description);
-  }
-
-  auto get_opt_flag(std::string_view const long_flag) -> optional_flag const & {
-    return get_optional<optional_flag>(long_flag);
-  }
-
-  template <typename T> auto get_opt_value(std::string_view const long_flag) -> optional_value<T> const & {
-    return get_optional<optional_value<T>>(long_flag);
-  }
-
-  template <typename t> auto get_opt_list(std::string_view const long_flag) -> optional_list<t> const & {
-    return get_optional<optional_list<t>>(long_flag);
-  }
-
-  template <typename T> auto get_req_value(std::string_view const name) -> required_value<T> const & {
-    return get_required<required_value<T>>(name);
-  }
-
-  template <typename t> auto get_req_list(std::string_view const name) -> required_list<t> const & {
-    return get_required<required_list<t>>(name);
-  }
-
-  auto takes() -> size_t override;
-
-  auto add_command(std::string_view name, std::string_view desc) -> command &;
-
-protected:
-  std::string _base;
-  std::vector<std::unique_ptr<optional>> _optional;
-  std::vector<std::unique_ptr<argument>> _required;
-  std::vector<std::unique_ptr<command>> _commands;
-
-  auto show_help() const -> void;
-
-  void set_base(std::string_view base);
-
-  auto parse(char const *const *argv, int argc) -> int override;
-
-private:
-  template <typename Opt>
-  auto add_optional_arg(char const _short, std::string_view _long, std::string_view _desc) -> Opt const & {
-    auto opt = std::make_unique<Opt>(_short, _long, _desc);
-    if (std::ranges::any_of(_optional.begin(), _optional.end(), [_short, _long](auto &ptr) -> bool {
-          auto [s, l] = ptr->abbr();
-          return s == _short || l == _long;
-        })) {
-      auto msg = std::string("Duplicated optional argument for ") + _short + "/" + _long.data();
-      throw std::runtime_error(msg);
+    auto add_opt_flag(char const flag, std::string_view const long_flag,
+                      std::string_view description) -> optional_flag const & {
+        return add_optional_arg<optional_flag>(flag, long_flag, description);
     }
-    _optional.push_back(std::move(opt));
-    return *reinterpret_cast<Opt *>(_optional.back().get());
-  }
 
-  template <typename Arg> auto add_required_arg(std::string_view _name, std::string_view _desc) {
-    auto arg = std::make_unique<Arg>(_name, _desc);
-    if (std::ranges::any_of(_required.begin(), _required.end(),
-                            [_name](auto &ptr) -> bool { return _name == ptr->name(); })) {
-      auto msg = std::string("Duplicated required argument for ") + _name.data();
-      throw std::runtime_error(msg);
+    template <typename T>
+    auto add_opt_value(char const flag, std::string_view const long_flag,
+                       std::string_view description) -> optional_value<T> const & {
+        return add_optional_arg<optional_value<T>>(flag, long_flag, description);
     }
-    _required.push_back(std::move(arg));
-  }
 
-  template <typename T> auto get_optional(std::string_view _long) -> T const & {
-    auto v = std::ranges::filter_view(std::span(_optional.begin(), _optional.end()), [_long](auto &ptr) -> bool {
-      auto [s, l] = ptr->abbr();
-      return l == _long;
-    });
-    if (v.empty()) {
-      abort();
+    template <typename T>
+    auto add_opt_list(char const flag, std::string_view const long_flag,
+                      std::string_view description) -> optional_list<T> const & {
+        return add_optional_arg<optional_list<T>>(flag, long_flag, description);
     }
-    return *dynamic_cast<T const *>(v.begin()->get());
-  }
 
-  template <typename T> auto get_required(std::string_view _name) -> T const & {
-    auto v = std::ranges::filter_view(std::span(_required.begin(), _required.end()),
-                                      [_name](auto &ptr) -> bool { return ptr->name() == _name; });
-    if (v.empty()) {
-      abort();
+    template <typename T>
+    auto add_req_value(std::string_view const name, std::string_view const description) -> optional_value<T> const & {
+        return add_required_arg<required_value<T>>(name, description);
     }
-    return *dynamic_cast<T const *>(v.begin()->get());
-  }
+
+    template <typename T>
+    auto add_req_list(std::string_view const name, std::string_view const description) -> optional_list<T> const & {
+        return add_required_arg<required_list<T>>(name, description);
+    }
+
+    template <typename T>
+    auto add_req_list(char const flag, std::string_view const long_flag,
+                      std::string_view description) -> optional_list<T> const & {
+        return add_optional_arg<optional_list<T>>(flag, long_flag, description);
+    }
+
+    auto get_opt_flag(std::string_view const long_flag) -> optional_flag const & {
+        return get_optional<optional_flag>(long_flag);
+    }
+
+    template <typename T> auto get_opt_value(std::string_view const long_flag) -> optional_value<T> const & {
+        return get_optional<optional_value<T>>(long_flag);
+    }
+
+    template <typename t> auto get_opt_list(std::string_view const long_flag) -> optional_list<t> const & {
+        return get_optional<optional_list<t>>(long_flag);
+    }
+
+    template <typename T> auto get_req_value(std::string_view const name) -> required_value<T> const & {
+        return get_required<required_value<T>>(name);
+    }
+
+    template <typename t> auto get_req_list(std::string_view const name) -> required_list<t> const & {
+        return get_required<required_list<t>>(name);
+    }
+
+    auto takes() -> size_t override;
+
+    auto add_command(std::string_view name, std::string_view desc) -> command &;
+
+  protected:
+    std::string _base;
+    std::vector<std::unique_ptr<optional>> _optional;
+    std::vector<std::unique_ptr<argument>> _required;
+    std::vector<std::unique_ptr<command>> _commands;
+
+    auto show_help() const -> void;
+
+    void set_base(std::string_view base);
+
+    auto parse(char const *const *argv, int argc) -> int override;
+
+  private:
+    template <typename Opt>
+    auto add_optional_arg(char const _short, std::string_view _long, std::string_view _desc) -> Opt const & {
+        auto opt = std::make_unique<Opt>(_short, _long, _desc);
+        if (std::ranges::any_of(_optional.begin(), _optional.end(), [_short, _long](auto &ptr) -> bool {
+                auto [s, l] = ptr->abbr();
+                return s == _short || l == _long;
+            })) {
+            auto msg = std::string("Duplicated optional argument for ") + _short + "/" + _long.data();
+            throw std::runtime_error(msg);
+        }
+        _optional.push_back(std::move(opt));
+        return *reinterpret_cast<Opt *>(_optional.back().get());
+    }
+
+    template <typename Arg> auto add_required_arg(std::string_view _name, std::string_view _desc) {
+        auto arg = std::make_unique<Arg>(_name, _desc);
+        if (std::ranges::any_of(_required.begin(), _required.end(),
+                                [_name](auto &ptr) -> bool { return _name == ptr->name(); })) {
+            auto msg = std::string("Duplicated required argument for ") + _name.data();
+            throw std::runtime_error(msg);
+        }
+        _required.push_back(std::move(arg));
+    }
+
+    template <typename T> auto get_optional(std::string_view _long) -> T const & {
+        auto v = std::ranges::filter_view(std::span(_optional.begin(), _optional.end()), [_long](auto &ptr) -> bool {
+            auto [s, l] = ptr->abbr();
+            return l == _long;
+        });
+        if (v.empty()) {
+            abort();
+        }
+        return *dynamic_cast<T const *>(v.begin()->get());
+    }
+
+    template <typename T> auto get_required(std::string_view _name) -> T const & {
+        auto v = std::ranges::filter_view(std::span(_required.begin(), _required.end()),
+                                          [_name](auto &ptr) -> bool { return ptr->name() == _name; });
+        if (v.empty()) {
+            abort();
+        }
+        return *dynamic_cast<T const *>(v.begin()->get());
+    }
 };
 
 /*********************************************************************************************************************
@@ -413,18 +413,18 @@ private:
  *********************************************************************************************************************/
 
 class parser : public command {
-public:
-  parser(std::string_view _name, std::string_view _desc);
-  ~parser();
+  public:
+    parser(std::string_view _name, std::string_view _desc);
+    ~parser();
 
-  // Prevent unnecessary copy or move
-  parser(parser &&) = delete;
-  parser(parser const &) = delete;
+    // Prevent unnecessary copy or move
+    parser(parser &&) = delete;
+    parser(parser const &) = delete;
 
-  auto operator=(parser &&) -> parser & = delete;
-  auto operator=(parser const &) -> parser & = delete;
+    auto operator=(parser &&) -> parser & = delete;
+    auto operator=(parser const &) -> parser & = delete;
 
-  auto parse(int argc, char *argv[]) -> bool;
+    auto parse(int argc, char *argv[]) -> bool;
 };
 
 } // namespace argparse

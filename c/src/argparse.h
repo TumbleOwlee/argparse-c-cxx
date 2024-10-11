@@ -302,19 +302,19 @@ int parser_parse_args(struct parser *ctx, char const *const *argv, int argc);
  * @brief See parser_add_opt_flag(..)
  */
 #define add_opt_flag(parser, var, flag, l_flag, desc)                                                                  \
-  struct optional *var = parser_add_opt_flag(parser, flag, l_flag, desc)
+    struct optional *var = parser_add_opt_flag(parser, flag, l_flag, desc)
 
 /*!
  * @brief See parser_add_opt_value(..)
  */
 #define add_opt_value(parser, var, flag, l_flag, desc)                                                                 \
-  struct optional *var = parser_add_opt_value(parser, flag, l_flag, desc)
+    struct optional *var = parser_add_opt_value(parser, flag, l_flag, desc)
 
 /*!
  * @brief See parser_add_opt_list(..)
  */
 #define add_opt_list(parser, var, flag, l_flag, desc)                                                                  \
-  struct optional *var = parser_add_opt_list(parser, flag, l_flag, desc)
+    struct optional *var = parser_add_opt_list(parser, flag, l_flag, desc)
 
 /*!
  * @brief See parser_add_req_value(..)
@@ -335,19 +335,19 @@ int parser_parse_args(struct parser *ctx, char const *const *argv, int argc);
  * @brief See command_add_opt_flag(..)
  */
 #define cmd_add_opt_flag(cmd, var, flag, l_flag, desc)                                                                 \
-  struct optional *var = command_add_opt_flag(cmd, flag, l_flag, desc)
+    struct optional *var = command_add_opt_flag(cmd, flag, l_flag, desc)
 
 /*!
  * @brief See command_add_opt_value(..)
  */
 #define cmd_add_opt_value(cmd, var, flag, l_flag, desc)                                                                \
-  struct optional *var = cmd_add_opt_value(cmd, flag, l_flag, desc)
+    struct optional *var = cmd_add_opt_value(cmd, flag, l_flag, desc)
 
 /*!
  * @brief See command_add_opt_list(..)
  */
 #define cmd_add_opt_list(cmd, var, flag, l_flag, desc)                                                                 \
-  struct optional *var = command_add_opt_list(cmd, flag, l_flag, desc)
+    struct optional *var = command_add_opt_list(cmd, flag, l_flag, desc)
 
 /*!
  * @brief See command_add_req_value(..)
