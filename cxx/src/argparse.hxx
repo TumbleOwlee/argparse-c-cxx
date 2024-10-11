@@ -1,5 +1,8 @@
 /*********************************************************************************************************************/
 
+#ifndef __ARGPARSE_CXX__
+#define __ARGPARSE_CXX__
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -260,20 +263,20 @@ class command : public argument {
 public:
   command(std::string_view _name, std::string_view _desc);
 
-  auto add_opt_flag(char const flag, std::string_view const long_flag, std::string_view description)
-      -> optional_flag const & {
+  auto add_opt_flag(char const flag, std::string_view const long_flag,
+                    std::string_view description) -> optional_flag const & {
     return add_optional_arg<optional_flag>(flag, long_flag, description);
   }
 
   template <typename T>
-  auto add_opt_value(char const flag, std::string_view const long_flag, std::string_view description)
-      -> optional_value<T> const & {
+  auto add_opt_value(char const flag, std::string_view const long_flag,
+                     std::string_view description) -> optional_value<T> const & {
     return add_optional_arg<optional_value<T>>(flag, long_flag, description);
   }
 
   template <typename T>
-  auto add_opt_list(char const flag, std::string_view const long_flag, std::string_view description)
-      -> optional_list<T> const & {
+  auto add_opt_list(char const flag, std::string_view const long_flag,
+                    std::string_view description) -> optional_list<T> const & {
     return add_optional_arg<optional_list<T>>(flag, long_flag, description);
   }
 
@@ -288,8 +291,8 @@ public:
   }
 
   template <typename T>
-  auto add_req_list(char const flag, std::string_view const long_flag, std::string_view description)
-      -> optional_list<T> const & {
+  auto add_req_list(char const flag, std::string_view const long_flag,
+                    std::string_view description) -> optional_list<T> const & {
     return add_optional_arg<optional_list<T>>(flag, long_flag, description);
   }
 
@@ -403,5 +406,7 @@ public:
 };
 
 } // namespace argparse
+
+#endif // __ARGPARSE_CXX__
 
 /*********************************************************************************************************************/

@@ -146,28 +146,31 @@ auto argparse::command::parse(char const *const *argv, int argc) -> int {
         }
       }
     } else if (pos != argc) {
-      for (auto &c : _commands) {
-        if (c->name() == sv) {
-          auto used = c->parse(&argv[pos], argc - pos);
+      auto c = _commands.begin();
+      while (c != _commands.end()) {
+        if ((*c)->name() == sv) {
+          auto used = (*c)->parse(&argv[pos], argc - pos);
           if (used == -1) {
             return -1;
           }
           pos += used + 1;
           break;
         }
+        ++c;
       }
-    } else {
-      for (auto &r : _required) {
-        if (pos >= argc) {
-          return -1;
+      if (c == _commands.end()) {
+        for (auto &r : _required) {
+          if (pos >= argc) {
+            return -1;
+          }
+          auto used = r->parse(&argv[pos], argc - pos);
+          if (used == -1) {
+            return -1;
+          }
+          pos += used;
         }
-        auto used = r->parse(&argv[pos], argc - pos);
-        if (used == -1) {
-          return -1;
-        }
-        pos += used;
+        return pos >= argc;
       }
-      return pos >= argc;
     }
   }
 
