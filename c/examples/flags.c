@@ -8,8 +8,8 @@ int main(int argc, char const *const *argv) {
     // Optional parameters
     add_opt_flag(parser, verbose, 'v', "verbose", "Verbosity flag enabling more logging.");
     add_opt_flag(parser, test, 't', "test", "Set testing flag.");
-    add_opt_value(parser, output, 'o', "output", "PATH", "Optional output file path.");
-    add_opt_list(parser, files, 'l', "list", "FILE", "List of optional files.");
+    add_opt_value(parser, output, 'o', "output", "PATH", "Optional output file path.", ARG_REQUIRED);
+    add_opt_list(parser, files, 'l', "list", "FILE", "List of optional files.", ARG_NONE);
 
     // Required parameters
     // add_req_value(parser, input, "INPUT", "Input file path.");
@@ -17,11 +17,12 @@ int main(int argc, char const *const *argv) {
 
     // Add command with its own arguments
     add_command(parser, run, "run", "The run subcommand.");
-    cmd_add_opt_flag(run, flag, 'f', "flag", "Activate some flag.");
+    cmd_add_opt_value(run, flag, 'f', "flag", "FLAG", "Activate some flag.", ARG_REQUIRED);
 
     // Add subcommand of command
     cmd_add_subcommand(run, show, "show", "The run subcommand.");
     cmd_add_opt_flag(show, what, 'w', "what", "What to show?");
+    cmd_add_req_value(show, input, "INPUT", "Input file path.");
     cmd_add_req_list(show, vars, "VARS", "Some variables.");
 
     if (0 != parser_parse_args(parser, argv, argc)) {

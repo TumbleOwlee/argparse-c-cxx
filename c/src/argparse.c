@@ -36,6 +36,7 @@
 struct __attribute__((packed)) optional {
     char _short;
     unsigned int _count : 8;
+    unsigned int _flags : 8;
     char const *_long;
     char const *_placeholder;
     char const *_desc;
@@ -46,10 +47,11 @@ struct __attribute__((packed)) optional {
 };
 
 static void optional_init(struct optional *ctx, char const flag, char const *const l_flag,
-                          char const *const placeholder, char const *const desc, int (*takes)(),
+                          char const *const placeholder, char const *const desc, unsigned int flags, int (*takes)(),
                           int (*parse)(struct optional *, char const *const *, int)) {
     ctx->_short = flag;
     ctx->_long = l_flag;
+    ctx->_flags = flags;
     ctx->_placeholder = placeholder;
     ctx->_desc = desc;
     ctx->_count = 0;
@@ -279,24 +281,25 @@ struct __attribute__((packed)) optional_item {
 };
 
 static struct optional_item *optional_item_new(char const flag, char const *const l_flag, char const *const placeholder,
-                                               char const *const desc, int (*takes)(),
+                                               char const *const desc, unsigned int flags, int (*takes)(),
                                                int (*parse)(struct optional *, char const *const *, int)) {
     struct optional_item *ctx = malloc(sizeof(struct optional_item));
     if (ctx != NULL) {
-        optional_init(&ctx->_optional, flag, l_flag, placeholder, desc, takes, parse);
+        optional_init(&ctx->_optional, flag, l_flag, placeholder, desc, flags, takes, parse);
         ctx->_next = NULL;
     }
     return ctx;
 }
 
 static struct optional *command_add_optional_item(struct command *ctx, char const flag, char const *const l_flag,
-                                                  char const *const placeholder, char const *const desc, int (*takes)(),
+                                                  char const *const placeholder, char const *const desc,
+                                                  unsigned int flags, int (*takes)(),
                                                   int (*parse)(struct optional *, char const *const *, int)) {
     if (ctx == NULL) {
         return NULL;
     }
 
-    struct optional_item *item = optional_item_new(flag, l_flag, placeholder, desc, takes, parse);
+    struct optional_item *item = optional_item_new(flag, l_flag, placeholder, desc, flags, takes, parse);
     if (item != NULL) {
         if (ctx->_optionals == NULL) {
             ctx->_optionals = item;
@@ -433,18 +436,20 @@ struct command *command_add_subcommand(struct command *ctx, char const *const na
 }
 
 struct optional *command_add_opt_flag(struct command *ctx, char const flag, char const *const l_flag,
-                                      char const *const desc) {
-    return command_add_optional_item(ctx, flag, l_flag, "", desc, optional_flag_takes, optional_flag_parse);
+                                      char const *const desc, unsigned int flags) {
+    return command_add_optional_item(ctx, flag, l_flag, NULL, desc, flags, optional_flag_takes, optional_flag_parse);
 }
 
 struct optional *command_add_opt_value(struct command *ctx, char const flag, char const *const l_flag,
-                                       char const *const placeholder, char const *const desc) {
-    return command_add_optional_item(ctx, flag, l_flag, placeholder, desc, optional_value_takes, optional_value_parse);
+                                       char const *const placeholder, char const *const desc, unsigned int flags) {
+    return command_add_optional_item(ctx, flag, l_flag, placeholder, desc, flags, optional_value_takes,
+                                     optional_value_parse);
 }
 
 struct optional *command_add_opt_list(struct command *ctx, char const flag, char const *const l_flag,
-                                      char const *const placeholder, char const *const desc) {
-    return command_add_optional_item(ctx, flag, l_flag, placeholder, desc, optional_list_takes, optional_list_parse);
+                                      char const *const placeholder, char const *const desc, unsigned int flags) {
+    return command_add_optional_item(ctx, flag, l_flag, placeholder, desc, flags, optional_list_takes,
+                                     optional_list_parse);
 }
 
 struct required *command_add_req_value(struct command *ctx, char const *const name, char const *const desc) {
@@ -533,21 +538,53 @@ static void command_show_help(struct command *ctx) {
             opt = opt->_next;
         }
 
+        int printed = 0;
         opt = ctx->_optionals;
-        fprintf(stdout, "    Options:\n\n");
         while (opt != NULL) {
-            if (opt->_optional._placeholder == NULL) {
-                fprintf(stdout, "        -%c, --%-*s%s\n", opt->_optional._short, width, opt->_optional._long,
-                        opt->_optional._desc);
-            } else {
-                fprintf(stdout, "        -%c, --%s <%s>%-*s%s \n", opt->_optional._short, opt->_optional._long,
-                        opt->_optional._placeholder,
-                        (int)(width - strlen(opt->_optional._long) - strlen(opt->_optional._placeholder)) - 3, "",
-                        opt->_optional._desc);
+            if ((opt->_optional._flags & ARG_REQUIRED) == ARG_REQUIRED) {
+                if (printed == 0) {
+                    fprintf(stdout, "    Required flags:\n\n");
+                    printed = 1;
+                }
+                if (opt->_optional._placeholder == NULL) {
+                    fprintf(stdout, "        -%c, --%-*s%s\n", opt->_optional._short, width, opt->_optional._long,
+                            opt->_optional._desc);
+                } else {
+                    fprintf(stdout, "        -%c, --%s <%s>%-*s%s \n", opt->_optional._short, opt->_optional._long,
+                            opt->_optional._placeholder,
+                            (int)(width - strlen(opt->_optional._long) - strlen(opt->_optional._placeholder)) - 3, "",
+                            opt->_optional._desc);
+                }
             }
             opt = opt->_next;
         }
-        fprintf(stdout, "\n");
+        if (printed == 1) {
+            fprintf(stdout, "\n");
+        }
+
+        printed = 0;
+        opt = ctx->_optionals;
+        while (opt != NULL) {
+            if ((opt->_optional._flags & ARG_REQUIRED) != ARG_REQUIRED) {
+                if (printed == 0) {
+                    fprintf(stdout, "    Optional flags:\n\n");
+                    printed = 1;
+                }
+                if (opt->_optional._placeholder == NULL) {
+                    fprintf(stdout, "        -%c, --%-*s%s\n", opt->_optional._short, width, opt->_optional._long,
+                            opt->_optional._desc);
+                } else {
+                    fprintf(stdout, "        -%c, --%s <%s>%-*s%s \n", opt->_optional._short, opt->_optional._long,
+                            opt->_optional._placeholder,
+                            (int)(width - strlen(opt->_optional._long) - strlen(opt->_optional._placeholder)) - 3, "",
+                            opt->_optional._desc);
+                }
+            }
+            opt = opt->_next;
+        }
+        if (printed == 1) {
+            fprintf(stdout, "\n");
+        }
     }
 
     // Display all supported commands
@@ -584,7 +621,7 @@ static void command_show_help(struct command *ctx) {
         }
 
         req = ctx->_requires;
-        fprintf(stdout, "    Required:\n\n");
+        fprintf(stdout, "    Required arguments:\n\n");
         while (req != NULL) {
             fprintf(stdout, "        %-*s%s\n", width, req->_required._name, req->_required._desc);
             req = req->_next;
@@ -676,12 +713,33 @@ static int optional_parse(struct command *ctx, char const *const *argv, int argc
  * Parsing argument for command
  *********************************************************************************************************************/
 
+static int command_check_if_required(struct optional_item *o) {
+    while (o != NULL) {
+        if ((o->_optional._flags & ARG_REQUIRED) == ARG_REQUIRED) {
+            int takes = o->_optional.takes();
+            int _count = o->_optional._count;
+            if (takes > _count) {
+                if (o->_optional.takes() > 1) {
+                    fprintf(stderr, "Missing option: -%c, --%s <%s...>\n", o->_optional._short, o->_optional._long,
+                            o->_optional._placeholder);
+                } else {
+                    fprintf(stderr, "Missing option: -%c, --%s <%s> \n", o->_optional._short, o->_optional._long,
+                            o->_optional._placeholder);
+                }
+                return -1;
+            }
+        }
+        o = o->_next;
+    }
+    return 0;
+}
+
 static int command_parse_args(struct command *ctx, char const *const *argv, int argc) {
     // Forbid multiple processing of same command
     if (ctx->_set != 0) {
         return -1;
     }
-
+    struct required_item *r = NULL;
     ctx->_set = 1;
     int pos = 1;
     while (pos < argc) {
@@ -711,7 +769,7 @@ static int command_parse_args(struct command *ctx, char const *const *argv, int 
                         if (used == -1) {
                             return -1;
                         }
-                        pos += used + 1;
+                        pos += used;
                         break;
                     }
                     c = c->_next;
@@ -722,7 +780,7 @@ static int command_parse_args(struct command *ctx, char const *const *argv, int 
             }
             // Check for required arguments if arguments remaining and no subcommand was parsed
             if (pos < argc && c == NULL) {
-                struct required_item *r = ctx->_requires;
+                r = ctx->_requires;
                 while (r != NULL) {
                     if (pos >= argc) {
                         return -1;
@@ -734,14 +792,23 @@ static int command_parse_args(struct command *ctx, char const *const *argv, int 
                     pos += used;
                     r = r->_next;
                 }
-                return pos;
+
+                if (command_check_if_required(ctx->_optionals) != 0) {
+                    return -1;
+                } else {
+                    return pos;
+                }
             }
         } else {
             return -1;
         }
     }
 
-    return ctx->_requires == NULL ? argc : -1;
+    if (command_check_if_required(ctx->_optionals) != 0) {
+        return -1;
+    } else {
+        return ctx->_requires == NULL ? pos : -1;
+    }
 }
 
 /*********************************************************************************************************************
@@ -774,19 +841,19 @@ struct command *parser_add_command(struct parser *ctx, char const *const name, c
 
 struct optional *parser_add_opt_flag(struct parser *ctx, char const flag, char const *const l_flag,
                                      char const *const desc) {
-    return command_add_optional_item(&ctx->_internal, flag, l_flag, NULL, desc, optional_flag_takes,
+    return command_add_optional_item(&ctx->_internal, flag, l_flag, NULL, desc, ARG_NONE, optional_flag_takes,
                                      optional_flag_parse);
 }
 
 struct optional *parser_add_opt_value(struct parser *ctx, char const flag, char const *const l_flag,
-                                      const char *const placeholder, char const *const desc) {
-    return command_add_optional_item(&ctx->_internal, flag, l_flag, placeholder, desc, optional_value_takes,
+                                      const char *const placeholder, char const *const desc, unsigned int flags) {
+    return command_add_optional_item(&ctx->_internal, flag, l_flag, placeholder, desc, flags, optional_value_takes,
                                      optional_value_parse);
 }
 
 struct optional *parser_add_opt_list(struct parser *ctx, char const flag, char const *const l_flag,
-                                     const char *const placeholder, char const *const desc) {
-    return command_add_optional_item(&ctx->_internal, flag, l_flag, placeholder, desc, optional_list_takes,
+                                     const char *const placeholder, char const *const desc, unsigned int flags) {
+    return command_add_optional_item(&ctx->_internal, flag, l_flag, placeholder, desc, flags, optional_list_takes,
                                      optional_list_parse);
 }
 
@@ -799,7 +866,7 @@ struct required *parser_add_req_list(struct parser *ctx, char const *const name,
 }
 
 int parser_parse_args(struct parser *ctx, char const *const *argv, int argc) {
-    return command_parse_args(&ctx->_internal, argv, argc) == -1 ? 1 : 0;
+    return command_parse_args(&ctx->_internal, argv, argc) == argc ? 0 : 1;
 }
 
 /*********************************************************************************************************************/

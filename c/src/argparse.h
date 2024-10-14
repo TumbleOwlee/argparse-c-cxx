@@ -29,6 +29,8 @@
 extern C {
 #endif
 
+    enum flags { ARG_NONE = 0, ARG_REQUIRED = 1 };
+
     /*!
      * @brief Optional parameter type, can be either a simple flag, a optional value, or list of optional values
      */
@@ -149,10 +151,11 @@ extern C {
      * @param flag                The short version of the flag
      * @param l_flag              The long version of the flag
      * @param desc                Description of the flag
+     * @param flags                1 if flag is required, else 0
      * @return struct optional*   Reference to the newly added optional flag
      */
     struct optional *command_add_opt_flag(struct command * ctx, char const flag, char const *const l_flag,
-                                          char const *const desc);
+                                          char const *const desc, unsigned int flags);
 
     /*!
      * @brief Add new optional value to command
@@ -162,10 +165,11 @@ extern C {
      * @param l_flag              The long version of the value flag
      * @param placeholder         Text placeholder for value.
      * @param desc                Description of the value flag
+     * @param flags                1 if flag is required, else 0
      * @return struct optional*   Reference to the newly added optional value
      */
     struct optional *command_add_opt_value(struct command * ctx, char const flag, char const *const l_flag,
-                                           const char *const placeholder, char const *const desc);
+                                           const char *const placeholder, char const *const desc, unsigned int flags);
 
     /*!
      * @brief Add new optional list of values to command
@@ -175,10 +179,11 @@ extern C {
      * @param l_flag              The long version of the list of values flag
      * @param placeholder         Text placeholder for value.
      * @param desc                Description of the list of values flag
+     * @param flags                1 if flag is required, else 0
      * @return struct optional*   Reference to the newly added optional list of values
      */
     struct optional *command_add_opt_list(struct command * ctx, char const flag, char const *const l_flag,
-                                          char const *const placeholder, char const *const desc);
+                                          char const *const placeholder, char const *const desc, unsigned int flags);
 
     /*!
      * @brief Add new required value to command
@@ -253,10 +258,11 @@ extern C {
      * @param l_flag               Long flag of the optional value
      * @param placeholder          Text placeholder for value
      * @param desc                 Description of the optional value
+     * @param flags                1 if flag is required, else 0
      * @return struct optional*    Reference to the created optional value
      */
     struct optional *parser_add_opt_value(struct parser * ctx, char const flag, char const *const l_flag,
-                                          const char *const placeholder, char const *const desc);
+                                          const char *const placeholder, char const *const desc, unsigned int flags);
 
     /*!
      * @brief Adds a new optional value list to the parser
@@ -266,10 +272,11 @@ extern C {
      * @param l_flag               Long flag of the optional value list
      * @param placeholder          Text placeholder for value
      * @param desc                 Description of the optional value list
+     * @param flags                1 if flag is required, else 0
      * @return struct optional*    Reference to the created optional value list
      */
     struct optional *parser_add_opt_list(struct parser * ctx, char const flag, char const *const l_flag,
-                                         const char *const placeholder, char const *const desc);
+                                         const char *const placeholder, char const *const desc, unsigned int flags);
 
     /*!
      * @brief Adds a new required value to the parser
@@ -315,14 +322,14 @@ extern C {
 /*!
  * @brief See parser_add_opt_value(..)
  */
-#define add_opt_value(parser, var, flag, l_flag, placeholder, desc)                                                    \
-    struct optional *var = parser_add_opt_value(parser, flag, l_flag, placeholder, desc)
+#define add_opt_value(parser, var, flag, l_flag, placeholder, desc, flags)                                             \
+    struct optional *var = parser_add_opt_value(parser, flag, l_flag, placeholder, desc, flags)
 
 /*!
  * @brief See parser_add_opt_list(..)
  */
-#define add_opt_list(parser, var, flag, l_flag, placeholder, desc)                                                     \
-    struct optional *var = parser_add_opt_list(parser, flag, l_flag, placeholder, desc)
+#define add_opt_list(parser, var, flag, l_flag, placeholder, desc, flags)                                              \
+    struct optional *var = parser_add_opt_list(parser, flag, l_flag, placeholder, desc, flags)
 
 /*!
  * @brief See parser_add_req_value(..)
@@ -343,19 +350,19 @@ extern C {
  * @brief See command_add_opt_flag(..)
  */
 #define cmd_add_opt_flag(cmd, var, flag, l_flag, desc)                                                                 \
-    struct optional *var = command_add_opt_flag(cmd, flag, l_flag, desc)
+    struct optional *var = command_add_opt_flag(cmd, flag, l_flag, desc, ARG_NONE)
 
 /*!
  * @brief See command_add_opt_value(..)
  */
-#define cmd_add_opt_value(cmd, var, flag, l_flag, desc)                                                                \
-    struct optional *var = cmd_add_opt_value(cmd, flag, l_flag, desc)
+#define cmd_add_opt_value(cmd, var, flag, l_flag, placeholder, desc, flags)                                            \
+    struct optional *var = command_add_opt_value(cmd, flag, l_flag, placeholder, desc, flags)
 
 /*!
  * @brief See command_add_opt_list(..)
  */
-#define cmd_add_opt_list(cmd, var, flag, l_flag, desc)                                                                 \
-    struct optional *var = command_add_opt_list(cmd, flag, l_flag, desc)
+#define cmd_add_opt_list(cmd, var, flag, l_flag, placeholder, desc, flags)                                             \
+    struct optional *var = command_add_opt_list(cmd, flag, l_flag, placeholder, desc, flags)
 
 /*!
  * @brief See command_add_req_value(..)
