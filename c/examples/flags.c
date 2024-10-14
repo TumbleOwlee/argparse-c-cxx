@@ -8,8 +8,8 @@ int main(int argc, char const *const *argv) {
     // Optional parameters
     add_opt_flag(parser, verbose, 'v', "verbose", "Verbosity flag enabling more logging.");
     add_opt_flag(parser, test, 't', "test", "Set testing flag.");
-    add_opt_value(parser, output, 'o', "output", "Optional output file path.");
-    add_opt_list(parser, files, 'l', "list", "List of optional files.");
+    add_opt_value(parser, output, 'o', "output", "PATH", "Optional output file path.");
+    add_opt_list(parser, files, 'l', "list", "FILE", "List of optional files.");
 
     // Required parameters
     // add_req_value(parser, input, "INPUT", "Input file path.");
