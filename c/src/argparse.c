@@ -251,6 +251,7 @@ struct command_item;
 struct __attribute__((packed)) command {
     char const *_name;
     char const *_desc;
+    char const *_footer;
     unsigned int _set : 1;
 
     struct command *_parent;
@@ -259,9 +260,11 @@ struct __attribute__((packed)) command {
     struct command_item *_commands;
 };
 
-static void command_init(struct command *ctx, char const *const name, char const *const desc, struct command *parent) {
+static void command_init(struct command *ctx, char const *const name, char const *const desc, char const *const footer,
+                         struct command *parent) {
     ctx->_name = name;
     ctx->_desc = desc;
+    ctx->_footer = footer;
     ctx->_set = 0;
     ctx->_parent = parent;
     ctx->_optionals = NULL;
@@ -394,21 +397,23 @@ static void command_deinit(struct command *ctx) {
     }
 }
 
-static struct command_item *command_item_new(char const *const name, char const *const desc, struct command *parent) {
+static struct command_item *command_item_new(char const *const name, char const *const desc, char const *const footer,
+                                             struct command *parent) {
     struct command_item *ctx = malloc(sizeof(struct command_item));
     if (ctx != NULL) {
-        command_init(&ctx->_command, name, desc, parent);
+        command_init(&ctx->_command, name, desc, footer, parent);
         ctx->_next = NULL;
     }
     return ctx;
 }
 
-static struct command *command_add_command_item(struct command *ctx, char const *const name, char const *const desc) {
+static struct command *command_add_command_item(struct command *ctx, char const *const name, char const *const desc,
+                                                char const *const footer) {
     if (ctx == NULL) {
         return NULL;
     }
 
-    struct command_item *item = command_item_new(name, desc, ctx);
+    struct command_item *item = command_item_new(name, desc, footer, ctx);
     if (item != NULL) {
         if (ctx->_commands == NULL) {
             ctx->_commands = item;
@@ -429,8 +434,9 @@ static struct command *command_add_command_item(struct command *ctx, char const 
  * public interface for command
  *********************************************************************************************************************/
 
-struct command *command_add_subcommand(struct command *ctx, char const *const name, char const *const desc) {
-    return command_add_command_item(ctx, name, desc);
+struct command *command_add_subcommand(struct command *ctx, char const *const name, char const *const desc,
+                                       char const *const footer) {
+    return command_add_command_item(ctx, name, desc, footer);
 }
 
 struct flag *command_add_flag(struct command *ctx, char const flag, char const *const l_flag, char const *const desc,
@@ -621,6 +627,32 @@ static void command_show_help(struct command *ctx) {
         while (req != NULL) {
             fprintf(stdout, "        %-*s%s\n", width, req->_required._name, req->_required._desc);
             req = req->_next;
+        }
+        fprintf(stdout, "\n");
+    }
+
+    // Format footer
+    if (ctx->_footer != NULL) {
+        char const *start = ctx->_footer;
+        char const *end = ctx->_footer;
+
+        while (*start != '\0') {
+            char const *pos = end;
+            while (*pos != '\0' && *pos != ' ' && *pos != '\n') {
+                ++pos;
+            }
+            if (*pos == '\0') {
+                fprintf(stdout, "    %s\n", start);
+                break;
+            } else {
+                if (*pos == '\n' || (pos - start) > 80) {
+                    fprintf(stdout, "    %.*s\n", (int)(pos - start), start);
+                    start = pos + 1;
+                    end = pos + 1;
+                } else {
+                    end = pos + 1;
+                }
+            }
         }
         fprintf(stdout, "\n");
     }
@@ -815,10 +847,10 @@ struct parser {
     struct command _internal;
 };
 
-struct parser *parser_init(char const *const name, char const *const desc) {
+struct parser *parser_init(char const *const name, char const *const desc, char const *const footer) {
     struct parser *ctx = malloc(sizeof(struct parser));
     if (ctx != NULL) {
-        command_init(&ctx->_internal, name, desc, NULL);
+        command_init(&ctx->_internal, name, desc, footer, NULL);
     }
     return ctx;
 }
@@ -831,8 +863,9 @@ void parser_deinit(struct parser *ctx) {
     free(ctx);
 }
 
-struct command *parser_add_command(struct parser *ctx, char const *const name, char const *const desc) {
-    return command_add_command_item(&ctx->_internal, name, desc);
+struct command *parser_add_command(struct parser *ctx, char const *const name, char const *const desc,
+                                   char const *const footer) {
+    return command_add_command_item(&ctx->_internal, name, desc, footer);
 }
 
 struct flag *parser_add_flag(struct parser *ctx, char const flag, char const *const l_flag, char const *const desc) {

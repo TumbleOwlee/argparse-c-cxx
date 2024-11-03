@@ -3,7 +3,8 @@
 #include <stdio.h>
 
 int main(int argc, char const *const *argv) {
-    parser_new(parser, argv[0], "Short description of the application and its use-case.");
+    parser_new(parser, argv[0], "Short description of the application and its use-case.",
+               "Some additional information, e.g. copyright/license information.");
 
     // Optional parameters
     struct flag *vvv = parser_add_flag(parser, 'v', "verbose", "Verbosity flag enabling more logging.");
@@ -17,11 +18,11 @@ int main(int argc, char const *const *argv) {
     // add_req_list(parser, list, "LIST", "List of values.");
 
     // Add command with its own arguments
-    add_command(parser, run, "run", "The run subcommand.");
+    add_command(parser, run, "run", "The run subcommand.", NULL);
     cmd_add_flag_value(run, flag, 'f', "flag", "FLAG", "Activate some flag.", SET_REQUIRED);
 
     // Add subcommand of command
-    cmd_add_subcommand(run, show, "show", "The run subcommand.");
+    cmd_add_subcommand(run, show, "show", "The run subcommand.", NULL);
     cmd_add_flag(show, what, 'w', "what", "What to show?");
     cmd_add_arg_value(show, input, "INPUT", "Input file path.");
     cmd_add_arg_list(show, vars, "VARS", "Some variables.");

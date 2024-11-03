@@ -140,9 +140,11 @@ extern C {
      * @param ctx                 The parent command structure
      * @param name                Name of the subcommand
      * @param desc                Description of the subcommand
+     * @param footer              Optional footer text
      * @return struct command*    Reference to the newly added subcommand
      */
-    struct command *command_add_subcommand(struct command * ctx, char const *const name, char const *const desc);
+    struct command *command_add_subcommand(struct command * ctx, char const *const name, char const *const desc,
+                                           char const *const footer);
 
     /*!
      * @brief Add new optional flag to command
@@ -217,9 +219,10 @@ extern C {
      *
      * @param name               Name of the application (most likely argv[0])
      * @param desc               Description of the application, custom linebreaks supported
+     * @param footer             Optional footer text
      * @return struct parser*    Reference to the newly allocated parser structure
      */
-    struct parser *parser_init(char const *const name, char const *const desc);
+    struct parser *parser_init(char const *const name, char const *const desc, char const *const footer);
 
     /*!
      * @brief Deinitializes the parser structure, freeing all optional/arg parameters and subcommands
@@ -234,9 +237,11 @@ extern C {
      * @param ctx                  The parser context
      * @param name                 Name of the command
      * @param desc                 Description of the command
+     * @param footer             Optional footer text
      * @return struct command*     Reference to the created command
      */
-    struct command *parser_add_command(struct parser * ctx, char const *const name, char const *const desc);
+    struct command *parser_add_command(struct parser * ctx, char const *const name, char const *const desc,
+                                       char const *const footer);
 
     /*!
      * @brief Adds a new optional flag to the parser
@@ -311,7 +316,7 @@ extern C {
 /*!
  * @brief See parser_init(..)
  */
-#define parser_new(var, name, desc) struct parser *var = parser_init(name, desc)
+#define parser_new(var, name, desc, footer) struct parser *var = parser_init(name, desc, footer)
 
 /*!
  * @brief See parser_add_flag(..)
@@ -343,7 +348,8 @@ extern C {
 /*!
  * @brief See parser_add_command(..)
  */
-#define add_command(parser, var, name, desc) struct command *var = parser_add_command(parser, name, desc)
+#define add_command(parser, var, name, desc, footer)                                                                   \
+    struct command *var = parser_add_command(parser, name, desc, footer)
 
 /*!
  * @brief See command_add_flag(..)
@@ -376,7 +382,8 @@ extern C {
 /*!
  * @brief See command_add_command(..)
  */
-#define cmd_add_subcommand(cmd, var, name, desc) struct command *var = command_add_subcommand(cmd, name, desc)
+#define cmd_add_subcommand(cmd, var, name, desc, footer)                                                               \
+    struct command *var = command_add_subcommand(cmd, name, desc, footer)
 
 #ifdef __cplusplus
 }
