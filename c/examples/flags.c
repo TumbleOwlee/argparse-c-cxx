@@ -8,7 +8,7 @@ int main(int argc, char const *const *argv) {
 
     // Optional parameters
     struct flag *vvv = parser_add_flag(parser, 'v', "verbose", "Verbosity flag enabling more logging.");
-    add_flag(parser, verbose, 'v', "verbose", "Verbosity flag enabling more logging.");
+    add_flag(parser, verbose, 'k', "vverbose", "Verbosity flag enabling more logging.");
     add_flag(parser, test, 't', "test", "Set testing flag.");
     add_flag_value(parser, output, 'o', "output", "PATH", "Optional output file path.", SET_REQUIRED);
     add_flag_list(parser, files, 'l', "list", "FILE", "List of optional files.", SET_NONE);

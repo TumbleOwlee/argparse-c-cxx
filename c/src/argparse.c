@@ -307,8 +307,27 @@ static struct flag *command_add_flag_item(struct command *ctx, char const flag, 
             ctx->_optionals = item;
         } else {
             struct flag_item *it = ctx->_optionals;
+
+            if (it->_optional._short == flag) {
+                fprintf(stderr, "Option '-%c' is configured for multiple flags.\n", flag);
+                abort();
+            }
+            if (strcmp(it->_optional._long, l_flag) == 0) {
+                fprintf(stderr, "Option '--%s' is configured for multiple flags.\n", l_flag);
+                abort();
+            }
+
             while (it->_next != NULL) {
                 it = it->_next;
+
+                if (it->_optional._short == flag) {
+                    fprintf(stderr, "Option '-%c' is configured for multiple flags.\n", flag);
+                    abort();
+                }
+                if (strcmp(it->_optional._long, l_flag) == 0) {
+                    fprintf(stderr, "Option '--%s' is configured for multiple flags.\n", l_flag);
+                    abort();
+                }
             }
             it->_next = item;
         }
@@ -349,8 +368,19 @@ static struct arg *command_add_arg_item(struct command *ctx, char const *const n
             ctx->_requires = item;
         } else {
             struct arg_item *it = ctx->_requires;
+
+            if (strcmp(it->_required._name, name) == 0) {
+                fprintf(stderr, "Required argument '%s' is configured multiple times.\n", name);
+                abort();
+            }
+
             while (it->_next != NULL) {
                 it = it->_next;
+
+                if (strcmp(it->_required._name, name) == 0) {
+                    fprintf(stderr, "Required argument '%s' is configured multiple times.\n", name);
+                    abort();
+                }
             }
             it->_next = item;
         }
@@ -419,8 +449,19 @@ static struct command *command_add_command_item(struct command *ctx, char const 
             ctx->_commands = item;
         } else {
             struct command_item *it = ctx->_commands;
+
+            if (strcmp(it->_command._name, name) == 0) {
+                fprintf(stderr, "(Sub-)Command '%s' is configured multiple times.\n", name);
+                abort();
+            }
+
             while (it->_next != NULL) {
                 it = it->_next;
+
+                if (strcmp(it->_command._name, name) == 0) {
+                    fprintf(stderr, "(Sub-)Command '%s' is configured multiple times.\n", name);
+                    abort();
+                }
             }
             it->_next = item;
         }
